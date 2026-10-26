@@ -1,5 +1,0 @@
-PySide6>=6.6.0
-qasync>=0.24.0
-google-generativeai>=0.3.0
-keyring>=24.0.0
-requests>=2.31.0

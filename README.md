@@ -1,81 +1,39 @@
-# JARVIS AI - Personal Desktop Assistant
+# JARVIS AI - Personal AI Desktop Assistant
 
-JARVIS AI is a cloud-powered personal desktop AI assistant built with Python, PySide6, and Google's Gemini API. Inspired by the iconic Iron Man AI, JARVIS combines advanced generative AI capabilities with a dark glassmorphic ("Liquid Glass") UI and animated AI core visualization.
+JARVIS AI is a cloud-powered personal AI assistant for Windows, inspired by the futuristic assistant concept from Iron Man. This application combines a powerful conversational AI brain with a futuristic animated desktop GUI, aiming to provide intelligent assistance and desktop automation.
 
----
+## Project Status: Phase 2 - Gemini Text Chat Implemented
 
-## ✨ Features
+This release includes:
+*   A functional "Liquid Glass" PySide6 desktop GUI.
+*   An animated JARVIS AI core visualization with state indicators (Idle, Thinking).
+*   A text-based chat interface for interacting with JARVIS.
+*   Integration with the Google Gemini API for conversational AI.
+*   Secure storage of your Gemini API key using Windows Credential Manager.
+*   A settings screen to enter and test your Gemini API key and select the AI model.
+*   Asynchronous operations to keep the UI responsive during AI requests.
 
-- **Liquid Glass Interface**: High-tech translucent visual aesthetic with custom shaders and fluid layout transitions built natively on Qt/PySide6.
-- **Animated AI Core**: Dynamic Arc Reactor core visualization that reflects real-time AI states (*Idle*, *Thinking*, *Speaking*, *Error*).
-- **Google Gemini Integration**: Asynchronous integration with Google Gemini generative models (`gemini-1.5-flash`, `gemini-2.0-flash`, `gemini-1.5-pro`, `gemini-pro`).
-- **Secure Key Storage**: Safe storage of your Gemini API credentials via the OS Keyring / Credential Manager.
-- **Non-blocking Operations**: Powered by `qasync` and `asyncio.to_thread` to guarantee 60 FPS UI responsiveness during heavy background network calls.
-- **Modular Navigation**: Dedicated views for Chat, Email, Windows Automation, Task Management, Memory & Context, and Application Settings.
+## Setup and Installation
 
----
+### 1. Prerequisites
 
-## 🛠️ Architecture Overview
+*   **Python 3.11+**: Download and install from [python.org](https://www.python.org/downloads/). Ensure you add Python to your PATH during installation.
+*   **Google Gemini API Key**:
+    1.  Go to [Google AI Studio](https://aistudio.google.com/).
+    2.  Sign in with your Google account.
+    3.  Create a new project or select an existing one.
+    4.  Generate an API key. **Keep this key secure and do not share it.**
 
-```
-JARVIS_AI/
-├── main.py                  # Application entry point with qasync event loop integration
-├── Jarvis_UI.py             # Main window layout, sidebar navigation, and chat handling
-├── gemini_api.py            # Gemini API provider wrapper and session manager
-├── ai_core_visualization.py # Animated Arc Reactor AI Core widget
-├── gui_components.py        # Liquid Glass UI card and background widgets
-├── config.py                # Configuration and secure credential manager
-├── utils.py                 # Logging setups and user message dialogs
-└── requirements.txt         # Project dependencies
-```
+### 2. Clone the Repository (or create files manually)
 
----
+If you have the project files, navigate to the project directory. If you are building from scratch, create a directory named `JARVIS_AI` and place the generated files (`main.py`, `jarvis_ui.py`, `gui_components.py`, `ai_core_visualization.py`, `gemini_api.py`, `config.py`, `utils.py`, `requirements.txt`, `README.md`, `pyinstaller_config.spec`) inside it.
 
-## 🚀 Getting Started
+### 3. Set up a Virtual Environment
 
-### Prerequisites
+It's highly recommended to use a virtual environment to manage dependencies.
 
-- **Python 3.11+**
-- **Google Gemini API Key**: Obtain a key from [Google AI Studio](https://aistudio.google.com/).
-
-### Installation
-
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/your-username/JARVIS_AI.git
-   cd JARVIS_AI
-   ```
-
-2. **Set Up Virtual Environment**:
-   ```bash
-   python -m venv venv
-   # On Windows:
-   .\venv\Scripts\activate
-   # On Linux/macOS:
-   source venv/bin/activate
-   ```
-
-3. **Install Dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Launch Application**:
-   ```bash
-   python main.py
-   ```
-
----
-
-## ⚙️ Configuration
-
-1. Launch JARVIS AI and navigate to the **Settings** section (⚙️) on the left sidebar.
-2. Enter your **Google Gemini API Key**.
-3. Select your desired model (e.g., `gemini-1.5-flash` or `gemini-2.0-flash`).
-4. Click **Save & Validate Credentials**. Your API key will be securely saved into your operating system's credential manager.
-
----
-
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for details.
+```bash
+cd JARVIS_AI
+python -m venv venv
+.\venv\Scripts\activate  # On Windows
+# source venv/bin/activate # On Linux/macOS (if you're adapting for other OS)
