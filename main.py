@@ -1,5 +1,4 @@
 
-# JARVIS_AI/main.py
 import sys
 import asyncio
 
@@ -11,7 +10,6 @@ from utils import setup_logging
 
 
 def main():
-    """Start the JARVIS AI desktop application."""
     setup_logging()
 
     app = QApplication(sys.argv)
@@ -21,11 +19,8 @@ def main():
     main_window = JarvisMainWindow()
     main_window.show()
 
-    try:
-        with loop:
-            loop.run_forever()
-    except KeyboardInterrupt:
-        pass
+    with loop:
+        loop.run_forever()
 
 
 if __name__ == "__main__":
