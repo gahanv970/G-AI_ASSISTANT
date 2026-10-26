@@ -1,5 +1,0 @@
-PySide6==6.6.1 # Or your preferred stable version
-qasync==0.24.0 # Crucial for asyncio-Qt integration
-google-generativeai==0.3.0 # Or the latest stable version
-keyring==24.3.0 # For secure credential storage
-requests==2.31.0 # Dependency of google-generativeai, good to specify
