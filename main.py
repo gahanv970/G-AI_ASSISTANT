@@ -1,10 +1,11 @@
+
 import sys
 import asyncio
 
 from PySide6.QtWidgets import QApplication
 from qasync import QEventLoop
 
-from Jarvis_UI import JarvisMainWindow
+from jarvis_ui import JarvisMainWindow
 from utils import setup_logging
 
 
