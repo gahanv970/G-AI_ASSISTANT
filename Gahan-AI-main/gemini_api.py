@@ -158,9 +158,8 @@ class GeminiAIProvider:
             chat = self._model.start_chat(history=formatted_chat_history)
             response = chat.send_message(latest_prompt)
 
-            if response.text:ṭ
+            if response.text:
                 return response.text.strip()
-
             if response.prompt_feedback and response.prompt_feedback.safety_ratings:
                 feedback = ", ".join([f"{s.category.name}: {s.probability.name}"
                                       for s in response.prompt_feedback.safety_ratings])
