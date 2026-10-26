@@ -1,5 +1,9 @@
+import os
 import sys
 import asyncio
+
+# Ensure project root directory is on sys.path for local module imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from PySide6.QtWidgets import QApplication
 from qasync import QEventLoop

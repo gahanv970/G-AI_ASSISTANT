@@ -88,6 +88,15 @@ JARVIS_AI/
 
 ---
 
+## 💡 Troubleshooting
+
+- **`ModuleNotFoundError: No module named 'PySide6'`**:
+  Make sure you activated your virtual environment `(venv)` and ran `pip install -r requirements.txt`.
+- **`ModuleNotFoundError: No module named 'config'`**:
+  Ensure you run `python main.py` directly inside the root folder where `main.py` and `config.py` are located.
+
+---
+
 ## ⚙️ Configuration
 
 1. Launch JARVIS AI and navigate to the **Settings** section (⚙️) on the left sidebar.
