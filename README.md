@@ -40,29 +40,47 @@ JARVIS_AI/
 - **Python 3.11+**
 - **Google Gemini API Key**: Obtain a key from [Google AI Studio](https://aistudio.google.com/).
 
-### Installation
+### Installation & Virtual Environment Setup
 
-1. **Clone the Repository**:
+1. **Clone or Navigate to the Repository**:
    ```bash
    git clone https://github.com/your-username/JARVIS_AI.git
    cd JARVIS_AI
    ```
 
-2. **Set Up Virtual Environment**:
+2. **Create the Virtual Environment**:
+   > ⚠️ **Important**: You must create the virtual environment before trying to activate it!
    ```bash
    python -m venv venv
-   # On Windows:
-   .\venv\Scripts\activate
-   # On Linux/macOS:
-   source venv/bin/activate
    ```
 
-3. **Install Dependencies**:
+3. **Activate Virtual Environment**:
+   - **Windows (PowerShell)**:
+     ```powershell
+     .\venv\Scripts\Activate.ps1
+     ```
+     *If PowerShell displays an `ExecutionPolicy` error, run this first:*
+     ```powershell
+     Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+     .\venv\Scripts\Activate.ps1
+     ```
+
+   - **Windows (Command Prompt / CMD)**:
+     ```cmd
+     .\venv\Scripts\activate.bat
+     ```
+
+   - **Linux / macOS**:
+     ```bash
+     source venv/bin/activate
+     ```
+
+4. **Install Dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Launch Application**:
+5. **Launch Application**:
    ```bash
    python main.py
    ```
