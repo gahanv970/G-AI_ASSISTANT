@@ -2,7 +2,7 @@ import logging
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 from google.api_core.exceptions import InvalidArgument, ResourceExhausted
-from config import get_secret, set_secret
+from config import get_secret, set_secret, load_config
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +11,7 @@ class GeminiAIProvider:
     """
     Provides an interface for interacting with the Google Gemini AI API.
     Handles API key management, model selection, conversation history,
-    and error handling.
+    memories injection, and error handling.
     """
     DEFAULT_MODEL = "gemini-1.5-flash"
     SUPPORTED_MODELS = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro", "gemini-pro"]
@@ -134,6 +134,7 @@ class GeminiAIProvider:
     def send_message(self, history: list, model_name: str = None) -> str:
         """
         Sends a conversation history to Gemini and returns the AI response string.
+        Injects stored user memories as system context.
         """
         if model_name:
             self.set_model(model_name)
@@ -148,6 +149,13 @@ class GeminiAIProvider:
             chat_history = history[:-1] if len(history) > 1 else []
             latest_turn = history[-1]
             latest_prompt = latest_turn['parts'][0] if latest_turn.get('parts') else ""
+
+            # Load saved user memories to inject context
+            config = load_config()
+            memories = config.get("memories", [])
+            if memories:
+                mem_context = "System Context / Saved User Memories:\n" + "\n".join([f"- {m}" for m in memories]) + "\n\n"
+                latest_prompt = mem_context + latest_prompt
 
             formatted_chat_history = []
             for item in chat_history:

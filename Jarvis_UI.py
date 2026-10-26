@@ -8,6 +8,8 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QListWidget,
+    QListWidgetItem,
     QMainWindow,
     QPushButton,
     QScrollArea,
@@ -45,7 +47,7 @@ class JarvisMainWindow(QMainWindow):
         self.setMinimumSize(1024, 768)
 
         self.ai_provider = GeminiAIProvider()
-        self.conversation_history = []  # list of (role, text) tuples, role in {"User", "JARVIS"}
+        self.conversation_history = []  # list of (role, text) tuples
         self._busy = False
         self._sidebar_buttons = []
 
@@ -56,6 +58,7 @@ class JarvisMainWindow(QMainWindow):
 
         self._setup_ui()
         self._load_settings()
+        self._load_tasks_and_memories()
 
         self.ai_state_changed.emit("idle")
         logger.info("JARVIS AI application initialized successfully.")
@@ -118,10 +121,12 @@ class JarvisMainWindow(QMainWindow):
             "Email Integration", "Manage and compose emails using Gemini AI."))  # 1
         self.stacked_widget.addWidget(self._create_placeholder_view(
             "Windows Automation", "Control apps, automate tasks, and run desktop workflows."))  # 2
-        self.stacked_widget.addWidget(self._create_placeholder_view(
-            "Task Management", "Track goals, reminders, and daily task lists."))  # 3
-        self.stacked_widget.addWidget(self._create_placeholder_view(
-            "Memory & Personalization", "View and refine JARVIS long-term memory & context."))  # 4
+
+        self._setup_tasks_view()
+        self.stacked_widget.addWidget(self.tasks_view)  # 3
+
+        self._setup_memory_view()
+        self.stacked_widget.addWidget(self.memory_view)  # 4
 
         self._setup_settings_view()
         self.stacked_widget.addWidget(self.settings_view)  # 5
@@ -136,7 +141,7 @@ class JarvisMainWindow(QMainWindow):
             QMainWindow {
                 background: transparent;
             }
-            QLabel, QPushButton, QLineEdit, QTextEdit {
+            QLabel, QPushButton, QLineEdit, QTextEdit, QListWidget {
                 font-family: 'Segoe UI', 'Roboto', sans-serif;
                 color: #E0E0E0;
             }
@@ -159,7 +164,7 @@ class JarvisMainWindow(QMainWindow):
                 color: rgba(224, 224, 224, 80);
                 border: 1px solid rgba(255, 255, 255, 15);
             }
-            QLineEdit, QTextEdit {
+            QLineEdit, QTextEdit, QListWidget {
                 background-color: rgba(15, 23, 42, 180);
                 border: 1px solid rgba(0, 200, 255, 60);
                 border-radius: 10px;
@@ -167,7 +172,7 @@ class JarvisMainWindow(QMainWindow):
                 selection-background-color: #00C8FF;
                 selection-color: #000000;
             }
-            QLineEdit:focus, QTextEdit:focus {
+            QLineEdit:focus, QTextEdit:focus, QListWidget:focus {
                 border: 1px solid rgba(0, 200, 255, 180);
             }
             QScrollArea {
@@ -312,6 +317,84 @@ class JarvisMainWindow(QMainWindow):
 
         chat_layout.addWidget(input_panel)
 
+    def _setup_tasks_view(self):
+        """Sets up the Task Management view."""
+        self.tasks_view = LiquidGlassCard(self.content_area, corner_radius=24)
+        layout = QVBoxLayout(self.tasks_view)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(15)
+
+        layout.addWidget(QLabel("<h2 style='color: #00C8FF;'>Task Management</h2>"))
+
+        input_row = QHBoxLayout()
+        self.task_input = QLineEdit()
+        self.task_input.setPlaceholderText("Enter a new task...")
+        self.task_input.setFixedHeight(38)
+        self.task_input.returnPressed.connect(self._add_task)
+        input_row.addWidget(self.task_input)
+
+        add_btn = QPushButton("Add Task")
+        add_btn.setFixedHeight(38)
+        add_btn.setCursor(Qt.PointingHandCursor)
+        add_btn.clicked.connect(self._add_task)
+        input_row.addWidget(add_btn)
+
+        layout.addLayout(input_row)
+
+        self.tasks_list = QListWidget()
+        layout.addWidget(self.tasks_list, stretch=1)
+
+        btn_row = QHBoxLayout()
+        remove_btn = QPushButton("Remove Selected Task")
+        remove_btn.setFixedHeight(36)
+        remove_btn.setCursor(Qt.PointingHandCursor)
+        remove_btn.clicked.connect(self._remove_task)
+        btn_row.addWidget(remove_btn)
+
+        layout.addLayout(btn_row)
+
+    def _setup_memory_view(self):
+        """Sets up the Memory & Personalization view."""
+        self.memory_view = LiquidGlassCard(self.content_area, corner_radius=24)
+        layout = QVBoxLayout(self.memory_view)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(15)
+
+        layout.addWidget(QLabel("<h2 style='color: #00C8FF;'>Memory & Context</h2>"))
+
+        input_row = QHBoxLayout()
+        self.memory_input = QLineEdit()
+        self.memory_input.setPlaceholderText("Add a persistent fact or preference (e.g. User prefers concise answers)...")
+        self.memory_input.setFixedHeight(38)
+        self.memory_input.returnPressed.connect(self._add_memory)
+        input_row.addWidget(self.memory_input)
+
+        add_btn = QPushButton("Save Memory")
+        add_btn.setFixedHeight(38)
+        add_btn.setCursor(Qt.PointingHandCursor)
+        add_btn.clicked.connect(self._add_memory)
+        input_row.addWidget(add_btn)
+
+        layout.addLayout(input_row)
+
+        self.memories_list = QListWidget()
+        layout.addWidget(self.memories_list, stretch=1)
+
+        btn_row = QHBoxLayout()
+        remove_btn = QPushButton("Remove Selected Memory")
+        remove_btn.setFixedHeight(36)
+        remove_btn.setCursor(Qt.PointingHandCursor)
+        remove_btn.clicked.connect(self._remove_memory)
+        btn_row.addWidget(remove_btn)
+
+        clear_btn = QPushButton("Clear All Memories")
+        clear_btn.setFixedHeight(36)
+        clear_btn.setCursor(Qt.PointingHandCursor)
+        clear_btn.clicked.connect(self._clear_memories)
+        btn_row.addWidget(clear_btn)
+
+        layout.addLayout(btn_row)
+
     def _setup_settings_view(self):
         """Sets up configuration settings for API keys and models."""
         self.settings_view = QWidget(self.content_area)
@@ -353,6 +436,63 @@ class JarvisMainWindow(QMainWindow):
         gemini_layout.addWidget(self.save_key_button)
 
         scroll_layout.addStretch()
+
+    # ------------------------------------------------------------------ Tasks & Memory Logic
+
+    def _load_tasks_and_memories(self):
+        """Loads tasks and memories from config JSON."""
+        config = load_config()
+        self.tasks_list.clear()
+        for t in config.get("tasks", []):
+            self.tasks_list.addItem(QListWidgetItem(str(t)))
+
+        self.memories_list.clear()
+        for m in config.get("memories", []):
+            self.memories_list.addItem(QListWidgetItem(str(m)))
+
+    def _save_tasks(self):
+        """Saves current tasks to config."""
+        tasks = [self.tasks_list.item(i).text() for i in range(self.tasks_list.count())]
+        config = load_config()
+        config["tasks"] = tasks
+        save_config(config)
+
+    def _save_memories(self):
+        """Saves current memories to config."""
+        memories = [self.memories_list.item(i).text() for i in range(self.memories_list.count())]
+        config = load_config()
+        config["memories"] = memories
+        save_config(config)
+
+    def _add_task(self):
+        text = self.task_input.text().strip()
+        if text:
+            self.tasks_list.addItem(QListWidgetItem(text))
+            self.task_input.clear()
+            self._save_tasks()
+
+    def _remove_task(self):
+        row = self.tasks_list.currentRow()
+        if row >= 0:
+            self.tasks_list.takeItem(row)
+            self._save_tasks()
+
+    def _add_memory(self):
+        text = self.memory_input.text().strip()
+        if text:
+            self.memories_list.addItem(QListWidgetItem(text))
+            self.memory_input.clear()
+            self._save_memories()
+
+    def _remove_memory(self):
+        row = self.memories_list.currentRow()
+        if row >= 0:
+            self.memories_list.takeItem(row)
+            self._save_memories()
+
+    def _clear_memories(self):
+        self.memories_list.clear()
+        self._save_memories()
 
     # ------------------------------------------------------------------ Logic & Settings
 
@@ -405,7 +545,9 @@ class JarvisMainWindow(QMainWindow):
                 return
 
         # Save model preference to config JSON
-        save_config({"gemini_model": model_name})
+        config = load_config()
+        config["gemini_model"] = model_name
+        save_config(config)
         self.ai_provider.set_model(model_name)
         self.model_status_label.setText(f"Active Model: {model_name}")
 
