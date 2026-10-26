@@ -75,7 +75,8 @@ JARVIS_AI/
      source venv/bin/activate
      ```
 
-4. **Install Dependencies**:
+4. **Install Required Packages (Fixes `ModuleNotFoundError: No module named 'PySide6'`)**:
+   > ⚠️ **Crucial**: While your virtual environment `(venv)` is active, you **must** run `pip install -r requirements.txt` to install `PySide6` and all required libraries!
    ```bash
    pip install -r requirements.txt
    ```
