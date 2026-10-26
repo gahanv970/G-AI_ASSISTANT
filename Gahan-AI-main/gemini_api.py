@@ -160,6 +160,7 @@ class GeminiAIProvider:
 
             if response.text:
                 return response.text.strip()
+
             if response.prompt_feedback and response.prompt_feedback.safety_ratings:
                 feedback = ", ".join([f"{s.category.name}: {s.probability.name}"
                                       for s in response.prompt_feedback.safety_ratings])
