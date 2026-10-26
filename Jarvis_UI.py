@@ -114,10 +114,14 @@ class JarvisMainWindow(QMainWindow):
         self._setup_chat_view()
         self.stacked_widget.addWidget(self.chat_view)  # 0
 
-        self.stacked_widget.addWidget(self._create_placeholder_view("Email Integration", "Manage and compose emails using Gemini AI."))  # 1
-        self.stacked_widget.addWidget(self._create_placeholder_view("Windows Automation", "Control apps, automate tasks, and run desktop workflows."))  # 2
-        self.stacked_widget.addWidget(self._create_placeholder_view("Task Management", "Track goals, reminders, and daily task lists."))  # 3
-        self.stacked_widget.addWidget(self._create_placeholder_view("Memory & Personalization", "View and refine JARVIS long-term memory & context."))  # 4
+        self.stacked_widget.addWidget(self._create_placeholder_view(
+            "Email Integration", "Manage and compose emails using Gemini AI."))  # 1
+        self.stacked_widget.addWidget(self._create_placeholder_view(
+            "Windows Automation", "Control apps, automate tasks, and run desktop workflows."))  # 2
+        self.stacked_widget.addWidget(self._create_placeholder_view(
+            "Task Management", "Track goals, reminders, and daily task lists."))  # 3
+        self.stacked_widget.addWidget(self._create_placeholder_view(
+            "Memory & Personalization", "View and refine JARVIS long-term memory & context."))  # 4
 
         self._setup_settings_view()
         self.stacked_widget.addWidget(self.settings_view)  # 5
@@ -438,7 +442,8 @@ class JarvisMainWindow(QMainWindow):
             return
 
         if not self.ai_provider.is_configured():
-            show_error_message("Configuration Needed", "Gemini API key is not configured. Please set it in Settings.")
+            show_error_message("Configuration Needed",
+                               "Gemini API key is not configured. Please set it in Settings.")
             return
 
         model_name = self._current_model_name()

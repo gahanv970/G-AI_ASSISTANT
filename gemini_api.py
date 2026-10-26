@@ -1,12 +1,7 @@
 import logging
-import sys
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
-from google.api_core.exceptions import (
-    GoogleAPIError, InvalidArgument, ResourceExhausted, ServiceUnavailable,
-    InternalServerError, ClientError
-)
-import requests
+from google.api_core.exceptions import InvalidArgument, ResourceExhausted
 from config import get_secret, set_secret
 
 logger = logging.getLogger(__name__)
@@ -139,13 +134,6 @@ class GeminiAIProvider:
     def send_message(self, history: list, model_name: str = None) -> str:
         """
         Sends a conversation history to Gemini and returns the AI response string.
-
-        Args:
-            history (list): A list of dicts [{'role': 'user'|'model', 'parts': [text]}, ...]
-            model_name (str, optional): The model name to use.
-
-        Returns:
-            str: AI response text.
         """
         if model_name:
             self.set_model(model_name)
@@ -157,12 +145,10 @@ class GeminiAIProvider:
             return "No input provided."
 
         try:
-            # Reconstruct chat session with prior conversation history if any
             chat_history = history[:-1] if len(history) > 1 else []
             latest_turn = history[-1]
             latest_prompt = latest_turn['parts'][0] if latest_turn.get('parts') else ""
 
-            # Standardize role format for Gemini start_chat
             formatted_chat_history = []
             for item in chat_history:
                 role = 'user' if item.get('role') in ('user', 'User') else 'model'
@@ -176,7 +162,8 @@ class GeminiAIProvider:
                 return response.text.strip()
 
             if response.prompt_feedback and response.prompt_feedback.safety_ratings:
-                feedback = ", ".join([f"{s.category.name}: {s.probability.name}" for s in response.prompt_feedback.safety_ratings])
+                feedback = ", ".join([f"{s.category.name}: {s.probability.name}"
+                                      for s in response.prompt_feedback.safety_ratings])
                 return f"I cannot respond to that due to safety guidelines. ({feedback})"
 
             return "I was unable to generate a response. Please try again."
