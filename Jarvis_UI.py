@@ -2,9 +2,11 @@ import asyncio
 import html
 import logging
 
-from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtCore import Qt, QTimer, Signal, QDate
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
+    QComboBox,
+    QDateEdit,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -48,6 +50,7 @@ class JarvisMainWindow(QMainWindow):
 
         self.ai_provider = GeminiAIProvider()
         self.conversation_history = []  # list of (role, text) tuples
+        self.all_tasks = []  # list of task dicts
         self._busy = False
         self._sidebar_buttons = []
 
@@ -141,7 +144,7 @@ class JarvisMainWindow(QMainWindow):
             QMainWindow {
                 background: transparent;
             }
-            QLabel, QPushButton, QLineEdit, QTextEdit, QListWidget {
+            QLabel, QPushButton, QLineEdit, QTextEdit, QListWidget, QComboBox, QDateEdit {
                 font-family: 'Segoe UI', 'Roboto', sans-serif;
                 color: #E0E0E0;
             }
@@ -164,7 +167,7 @@ class JarvisMainWindow(QMainWindow):
                 color: rgba(224, 224, 224, 80);
                 border: 1px solid rgba(255, 255, 255, 15);
             }
-            QLineEdit, QTextEdit, QListWidget {
+            QLineEdit, QTextEdit, QListWidget, QComboBox, QDateEdit {
                 background-color: rgba(15, 23, 42, 180);
                 border: 1px solid rgba(0, 200, 255, 60);
                 border-radius: 10px;
@@ -172,7 +175,7 @@ class JarvisMainWindow(QMainWindow):
                 selection-background-color: #00C8FF;
                 selection-color: #000000;
             }
-            QLineEdit:focus, QTextEdit:focus, QListWidget:focus {
+            QLineEdit:focus, QTextEdit:focus, QListWidget:focus, QComboBox:focus, QDateEdit:focus {
                 border: 1px solid rgba(0, 200, 255, 180);
             }
             QScrollArea {
@@ -318,20 +321,48 @@ class JarvisMainWindow(QMainWindow):
         chat_layout.addWidget(input_panel)
 
     def _setup_tasks_view(self):
-        """Sets up the Task Management view."""
+        """Sets up the Task Management view with priority, due date, status, and filtering."""
         self.tasks_view = LiquidGlassCard(self.content_area, corner_radius=24)
         layout = QVBoxLayout(self.tasks_view)
         layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setSpacing(12)
 
-        layout.addWidget(QLabel("<h2 style='color: #00C8FF;'>Task Management</h2>"))
+        header_layout = QHBoxLayout()
+        header_layout.addWidget(QLabel("<h2 style='color: #00C8FF;'>Task Management</h2>"))
+        header_layout.addStretch()
 
+        header_layout.addWidget(QLabel("Filter:"))
+        self.task_filter_combo = QComboBox()
+        self.task_filter_combo.addItems(["All", "Active", "Completed"])
+        self.task_filter_combo.currentTextChanged.connect(self._render_tasks)
+        header_layout.addWidget(self.task_filter_combo)
+
+        layout.addLayout(header_layout)
+
+        # Task creation controls
         input_row = QHBoxLayout()
         self.task_input = QLineEdit()
-        self.task_input.setPlaceholderText("Enter a new task...")
+        self.task_input.setPlaceholderText("Task title...")
         self.task_input.setFixedHeight(38)
         self.task_input.returnPressed.connect(self._add_task)
-        input_row.addWidget(self.task_input)
+        input_row.addWidget(self.task_input, stretch=2)
+
+        self.task_desc_input = QLineEdit()
+        self.task_desc_input.setPlaceholderText("Description (optional)...")
+        self.task_desc_input.setFixedHeight(38)
+        input_row.addWidget(self.task_desc_input, stretch=2)
+
+        self.task_priority_combo = QComboBox()
+        self.task_priority_combo.addItems(["High", "Medium", "Low"])
+        self.task_priority_combo.setCurrentText("Medium")
+        self.task_priority_combo.setFixedHeight(38)
+        input_row.addWidget(self.task_priority_combo)
+
+        self.task_due_date = QDateEdit()
+        self.task_due_date.setCalendarPopup(True)
+        self.task_due_date.setDate(QDate.currentDate())
+        self.task_due_date.setFixedHeight(38)
+        input_row.addWidget(self.task_due_date)
 
         add_btn = QPushButton("Add Task")
         add_btn.setFixedHeight(38)
@@ -345,6 +376,12 @@ class JarvisMainWindow(QMainWindow):
         layout.addWidget(self.tasks_list, stretch=1)
 
         btn_row = QHBoxLayout()
+        toggle_status_btn = QPushButton("Toggle Active/Completed")
+        toggle_status_btn.setFixedHeight(36)
+        toggle_status_btn.setCursor(Qt.PointingHandCursor)
+        toggle_status_btn.clicked.connect(self._toggle_task_status)
+        btn_row.addWidget(toggle_status_btn)
+
         remove_btn = QPushButton("Remove Selected Task")
         remove_btn.setFixedHeight(36)
         remove_btn.setCursor(Qt.PointingHandCursor)
@@ -364,7 +401,9 @@ class JarvisMainWindow(QMainWindow):
 
         input_row = QHBoxLayout()
         self.memory_input = QLineEdit()
-        self.memory_input.setPlaceholderText("Add a persistent fact or preference (e.g. User prefers concise answers)...")
+        self.memory_input.setPlaceholderText(
+            "Add a persistent fact or preference (e.g. User prefers concise answers)..."
+        )
         self.memory_input.setFixedHeight(38)
         self.memory_input.returnPressed.connect(self._add_memory)
         input_row.addWidget(self.memory_input)
@@ -442,19 +481,58 @@ class JarvisMainWindow(QMainWindow):
     def _load_tasks_and_memories(self):
         """Loads tasks and memories from config JSON."""
         config = load_config()
-        self.tasks_list.clear()
-        for t in config.get("tasks", []):
-            self.tasks_list.addItem(QListWidgetItem(str(t)))
+        raw_tasks = config.get("tasks", [])
+        self.all_tasks = []
+
+        for item in raw_tasks:
+            if isinstance(item, dict):
+                self.all_tasks.append(item)
+            else:
+                self.all_tasks.append({
+                    "title": str(item),
+                    "description": "",
+                    "priority": "Medium",
+                    "due_date": QDate.currentDate().toString("yyyy-MM-dd"),
+                    "status": "Active"
+                })
+
+        self._render_tasks()
 
         self.memories_list.clear()
         for m in config.get("memories", []):
             self.memories_list.addItem(QListWidgetItem(str(m)))
 
+    def _render_tasks(self):
+        """Renders tasks in the QListWidget based on active status filter."""
+        self.tasks_list.clear()
+        filter_status = self.task_filter_combo.currentText()
+
+        for index, task in enumerate(self.all_tasks):
+            status = task.get("status", "Active")
+            if filter_status == "Active" and status != "Active":
+                continue
+            if filter_status == "Completed" and status != "Completed":
+                continue
+
+            title = task.get("title", "")
+            desc = task.get("description", "")
+            priority = task.get("priority", "Medium")
+            due = task.get("due_date", "")
+
+            label = f"[{status.upper()}] [{priority} Priority] {title}"
+            if due:
+                label += f" (Due: {due})"
+            if desc:
+                label += f" - {desc}"
+
+            item = QListWidgetItem(label)
+            item.setData(Qt.UserRole, index)
+            self.tasks_list.addItem(item)
+
     def _save_tasks(self):
         """Saves current tasks to config."""
-        tasks = [self.tasks_list.item(i).text() for i in range(self.tasks_list.count())]
         config = load_config()
-        config["tasks"] = tasks
+        config["tasks"] = self.all_tasks
         save_config(config)
 
     def _save_memories(self):
@@ -465,17 +543,39 @@ class JarvisMainWindow(QMainWindow):
         save_config(config)
 
     def _add_task(self):
-        text = self.task_input.text().strip()
-        if text:
-            self.tasks_list.addItem(QListWidgetItem(text))
+        title = self.task_input.text().strip()
+        if title:
+            task = {
+                "title": title,
+                "description": self.task_desc_input.text().strip(),
+                "priority": self.task_priority_combo.currentText(),
+                "due_date": self.task_due_date.date().toString("yyyy-MM-dd"),
+                "status": "Active"
+            }
+            self.all_tasks.append(task)
             self.task_input.clear()
+            self.task_desc_input.clear()
             self._save_tasks()
+            self._render_tasks()
+
+    def _toggle_task_status(self):
+        item = self.tasks_list.currentItem()
+        if item:
+            task_idx = item.data(Qt.UserRole)
+            if task_idx is not None and 0 <= task_idx < len(self.all_tasks):
+                curr = self.all_tasks[task_idx].get("status", "Active")
+                self.all_tasks[task_idx]["status"] = "Completed" if curr == "Active" else "Active"
+                self._save_tasks()
+                self._render_tasks()
 
     def _remove_task(self):
-        row = self.tasks_list.currentRow()
-        if row >= 0:
-            self.tasks_list.takeItem(row)
-            self._save_tasks()
+        item = self.tasks_list.currentItem()
+        if item:
+            task_idx = item.data(Qt.UserRole)
+            if task_idx is not None and 0 <= task_idx < len(self.all_tasks):
+                self.all_tasks.pop(task_idx)
+                self._save_tasks()
+                self._render_tasks()
 
     def _add_memory(self):
         text = self.memory_input.text().strip()
